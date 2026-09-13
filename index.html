@@ -591,6 +591,7 @@
     border-bottom: 1px solid var(--line-soft);
   }
   .category-cover{
+    height: 100vh;
     min-height: 100vh;
     display:flex;
     flex-direction:column;
@@ -667,6 +668,14 @@
     z-index: 8;
     overflow:hidden;
   }
+  .explosion-3d{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index: 8;
+    opacity:0;
+  }
+  .explosion-3d.active{ opacity:1; }
   .particle{
     position:absolute;
     top:50%; left:50%;
@@ -1369,6 +1378,7 @@
       <div class="category-cover" data-cat="social">
         <div class="explosion-flash"></div>
         <div class="explosion-particles"></div>
+        <canvas class="explosion-3d"></canvas>
         <div class="cat-countdown"></div>
         <div class="cat-bomb">💣</div>
         <div class="cat-cover-label">سوشيال ميديا</div>
@@ -1398,7 +1408,7 @@
           </div>
         </div>
 
-        <div class="stack-card reveal" style="top:150px; z-index:2;" data-category="cat_vnvsfn">
+        <div class="stack-card reveal" style="top:96px; z-index:2;" data-category="cat_vnvsfn">
           <div class="project-row">
             <span class="project-num mono">02</span>
             <span class="project-title">إعلان ريلز — حلول المنزل الذكي</span>
@@ -1420,7 +1430,7 @@
           </div>
         </div>
 
-      <div class="stack-card reveal" data-category="cat_t7mrwr" style="top:204px; z-index:3;">
+      <div class="stack-card reveal" data-category="cat_t7mrwr" style="top:96px; z-index:3;">
         <div class="project-row">
           <span class="project-num mono">03</span>
           <span class="project-title">ريلز سوشيال ميديا</span>
@@ -1439,7 +1449,7 @@
             </div>
             <span class="work-tag">مشروع جديد</span>
           </div>
-        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:258px; z-index:4;">
+        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:96px; z-index:4;">
         <div class="project-row">
           <span class="project-num mono">04</span>
           <span class="project-title">إعلان ريلز — حلول المنزل الذكي 2</span>
@@ -1458,7 +1468,7 @@
             </div>
             <span class="work-tag">مشروع جديد</span>
           </div>
-        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:312px; z-index:5;">
+        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:96px; z-index:5;">
         <div class="project-row">
           <span class="project-num mono">05</span>
           <span class="project-title">فيديو تشويقي لكافية سعودي</span>
@@ -1477,7 +1487,7 @@
             </div>
             <span class="work-tag">مشروع جديد</span>
           </div>
-        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:366px; z-index:6;">
+        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:96px; z-index:6;">
         <div class="project-row">
           <span class="project-num mono">06</span>
           <span class="project-title">فيدو محل ايس بيري بالسعودية</span>
@@ -1496,7 +1506,7 @@
             </div>
             <span class="work-tag">مشروع جديد</span>
           </div>
-        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:420px; z-index:7;">
+        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:96px; z-index:7;">
         <div class="project-row">
           <span class="project-num mono">07</span>
           <span class="project-title">فيدو محل ايس بيري بالسعودية2</span>
@@ -1515,7 +1525,7 @@
             </div>
             <span class="work-tag">مشروع جديد</span>
           </div>
-        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:474px; z-index:8;">
+        </div></div><div class="stack-card reveal" data-category="cat_vnvsfn" style="top:96px; z-index:8;">
         <div class="project-row">
           <span class="project-num mono">08</span>
           <span class="project-title">فيدو محل ايس بيري بالسعودية3</span>
@@ -1541,6 +1551,7 @@
       <div class="category-cover" data-cat="design">
         <div class="explosion-flash"></div>
         <div class="explosion-particles"></div>
+        <canvas class="explosion-3d"></canvas>
         <div class="cat-countdown"></div>
         <div class="cat-bomb">💣</div>
         <div class="cat-cover-label">التصميم</div>
@@ -1557,6 +1568,7 @@
       <div class="category-cover" data-cat="photo">
         <div class="explosion-flash"></div>
         <div class="explosion-particles"></div>
+        <canvas class="explosion-3d"></canvas>
         <div class="cat-countdown"></div>
         <div class="cat-bomb">💣</div>
         <div class="cat-cover-label">التصوير</div>
@@ -1911,6 +1923,29 @@
     toolSkills.forEach(el => skillObserver.observe(el));
   }
 
+  // ---------- ONLY ONE VIDEO PLAYS AT A TIME ----------
+  // starting any clip pauses whichever other clip was already playing
+  const allSiteVideos = document.querySelectorAll('video');
+  allSiteVideos.forEach(video => {
+    video.addEventListener('play', () => {
+      allSiteVideos.forEach(v => { if (v !== video && !v.paused) v.pause(); });
+    });
+  });
+
+  // pause a clip automatically once it's scrolled out of view (its stack-card
+  // has been covered by the next one, or the section scrolled away)
+  if ('IntersectionObserver' in window){
+    const videoVisibilityObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting){
+          const vid = entry.target.querySelector('video');
+          if (vid && !vid.paused) vid.pause();
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.stack-card').forEach(card => videoVisibilityObserver.observe(card));
+  }
+
   // ---------- AUTO-FIT VIDEO FRAME TO EACH VIDEO'S REAL DIMENSIONS ----------
   document.querySelectorAll('.native-video-wrap video').forEach(v => {
     const fit = () => {
@@ -2051,6 +2086,190 @@
     tickStep();
   }
 
+  // ---------- 3D EXPLOSION + SMOKE (Three.js) ----------
+  function makeRadialTexture(stops){
+    const size = 128;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+    stops.forEach(([off, col]) => grad.addColorStop(off, col));
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(c);
+  }
+
+  let fireTex = null, smokeTex = null;
+  function getTextures(){
+    if (!fireTex){
+      fireTex = makeRadialTexture([
+        [0, 'rgba(255,255,255,1)'],
+        [0.28, 'rgba(255,205,90,1)'],
+        [0.6, 'rgba(255,100,20,0.85)'],
+        [1, 'rgba(255,60,0,0)']
+      ]);
+      // neutral soft white-to-transparent puff — real smoke's light/dark
+      // variation is painted on per-particle below via vertex colors instead,
+      // so this one shape can serve as both the bright lit billows and the
+      // dark charcoal ones seen in real smoke photos
+      smokeTex = makeRadialTexture([
+        [0, 'rgba(255,255,255,1)'],
+        [0.4, 'rgba(255,255,255,0.75)'],
+        [0.75, 'rgba(255,255,255,0.25)'],
+        [1, 'rgba(255,255,255,0)']
+      ]);
+    }
+    return { fireTex, smokeTex };
+  }
+
+  function run3DExplosion(cover){
+    const canvas = cover.querySelector('.explosion-3d');
+    if (!canvas || typeof THREE === 'undefined'){ return false; }
+
+    const rect = cover.getBoundingClientRect();
+    const w = rect.width || window.innerWidth;
+    const h = rect.height || window.innerHeight;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 100);
+    camera.position.set(0, 0, 14);
+    const baseCamPos = camera.position.clone();
+
+    const { fireTex, smokeTex } = getTextures();
+
+    // ---- fire / spark burst (additive glow, flies outward fast, fades quick) ----
+    const fireCount = 220;
+    const firePos = new Float32Array(fireCount * 3);
+    const fireColor = new Float32Array(fireCount * 3);
+    const fireVel = [];
+    const fireColors = [
+      [1, 0.55, 0.05], [1, 0.3, 0.05], [1, 0.85, 0.35], [1, 0.42, 0.15]
+    ];
+    for (let i = 0; i < fireCount; i++){
+      firePos[i*3] = 0; firePos[i*3+1] = 0; firePos[i*3+2] = 0;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      const speed = 4 + Math.random() * 9;
+      fireVel.push([
+        Math.sin(phi) * Math.cos(theta) * speed,
+        Math.sin(phi) * Math.sin(theta) * speed,
+        Math.cos(phi) * speed * 0.6
+      ]);
+      const c = fireColors[i % fireColors.length];
+      fireColor[i*3] = c[0]; fireColor[i*3+1] = c[1]; fireColor[i*3+2] = c[2];
+    }
+    const fireGeo = new THREE.BufferGeometry();
+    fireGeo.setAttribute('position', new THREE.BufferAttribute(firePos, 3));
+    fireGeo.setAttribute('color', new THREE.BufferAttribute(fireColor, 3));
+    const fireMat = new THREE.PointsMaterial({
+      size: 0.55, map: fireTex, vertexColors: true, transparent: true,
+      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
+    });
+    const fireSystem = new THREE.Points(fireGeo, fireMat);
+    scene.add(fireSystem);
+
+    // ---- smoke: bigger, slower, drifts up, expands, normal blending so it occludes ----
+    // colored per-particle (white-lit tops, mid grey, dark charcoal shadows)
+    // to look like a real billowing smoke cloud rather than a flat tint
+    const smokeCount = 90;
+    const smokePos = new Float32Array(smokeCount * 3);
+    const smokeColor = new Float32Array(smokeCount * 3);
+    const smokeVel = [];
+    const smokeSize = new Float32Array(smokeCount);
+    const smokeShades = [
+      [0.92, 0.91, 0.89], // bright lit white-grey
+      [0.68, 0.66, 0.64], // mid grey
+      [0.42, 0.40, 0.39], // dark grey
+      [0.16, 0.15, 0.15]  // near-black charcoal, like the deep pockets in the reference
+    ];
+    for (let i = 0; i < smokeCount; i++){
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * 1.2;
+      smokePos[i*3] = Math.cos(a) * r;
+      smokePos[i*3+1] = Math.sin(a) * r * 0.5 - 0.5;
+      smokePos[i*3+2] = (Math.random() - 0.5) * 3;
+      smokeVel.push([
+        (Math.random() - 0.5) * 1.4,
+        0.9 + Math.random() * 1.6,
+        (Math.random() - 0.5) * 1.4
+      ]);
+      smokeSize[i] = 2.4 + Math.random() * 3.2;
+      const shade = smokeShades[Math.floor(Math.random() * smokeShades.length)];
+      smokeColor[i*3] = shade[0]; smokeColor[i*3+1] = shade[1]; smokeColor[i*3+2] = shade[2];
+    }
+    const smokeGeo = new THREE.BufferGeometry();
+    smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePos, 3));
+    smokeGeo.setAttribute('size', new THREE.BufferAttribute(smokeSize, 1));
+    smokeGeo.setAttribute('color', new THREE.BufferAttribute(smokeColor, 3));
+    const smokeMat = new THREE.PointsMaterial({
+      size: 1, map: smokeTex, vertexColors: true, transparent: true, opacity: 0,
+      depthWrite: false, blending: THREE.NormalBlending, sizeAttenuation: true
+    });
+    const smokeSystem = new THREE.Points(smokeGeo, smokeMat);
+    scene.add(smokeSystem);
+
+    canvas.classList.add('active');
+
+    const start = performance.now();
+    const DURATION = 2100;
+    let rafId;
+
+    function tick(now){
+      const t = now - start;
+
+      // fire burst: fast outward flight, fading after ~0.9s
+      const fp = fireGeo.attributes.position.array;
+      for (let i = 0; i < fireCount; i++){
+        fp[i*3]   += fireVel[i][0] * 0.016;
+        fp[i*3+1] += fireVel[i][1] * 0.016 - 0.02; // slight gravity
+        fp[i*3+2] += fireVel[i][2] * 0.016;
+        fireVel[i][0] *= 0.94; fireVel[i][1] *= 0.94; fireVel[i][2] *= 0.94;
+      }
+      fireGeo.attributes.position.needsUpdate = true;
+      fireMat.opacity = Math.max(0, 1 - t / 900);
+
+      // smoke: slow drift upward, growing size, fading in then out
+      const sp = smokeGeo.attributes.position.array;
+      for (let i = 0; i < smokeCount; i++){
+        sp[i*3]   += smokeVel[i][0] * 0.016;
+        sp[i*3+1] += smokeVel[i][1] * 0.016;
+        sp[i*3+2] += smokeVel[i][2] * 0.016;
+        smokeVel[i][1] *= 0.995;
+      }
+      smokeGeo.attributes.position.needsUpdate = true;
+      smokeMat.size = 1 + (t / DURATION) * 3.2;
+      const smokeIn = Math.min(1, t / 350);
+      const smokeOut = t > 900 ? Math.max(0, 1 - (t - 900) / 1000) : 1;
+      smokeMat.opacity = smokeIn * smokeOut * 0.95;
+
+      // camera shake, settling down over the first half second
+      const shakeAmt = Math.max(0, 0.35 - t / 1400);
+      camera.position.set(
+        baseCamPos.x + (Math.random() - 0.5) * shakeAmt,
+        baseCamPos.y + (Math.random() - 0.5) * shakeAmt,
+        baseCamPos.z
+      );
+
+      renderer.render(scene, camera);
+
+      if (t < DURATION){
+        rafId = requestAnimationFrame(tick);
+      } else {
+        cancelAnimationFrame(rafId);
+        canvas.classList.remove('active');
+        fireGeo.dispose(); fireMat.dispose();
+        smokeGeo.dispose(); smokeMat.dispose();
+        renderer.dispose();
+      }
+    }
+    rafId = requestAnimationFrame(tick);
+    return true;
+  }
+
   function runExplosion(cover){
     playBoom();
     const flash = cover.querySelector('.explosion-flash');
@@ -2060,9 +2279,14 @@
       flash.classList.add('active');
     }
     cover.classList.add('shake');
-    spawnParticles(cover);
-    spawnBlackoutSmoke(cover);
-    setTimeout(() => spawnSmoke(cover), 150);
+
+    const used3D = run3DExplosion(cover);
+    if (!used3D){
+      // fallback for browsers without WebGL / if Three.js failed to load
+      spawnParticles(cover);
+      spawnBlackoutSmoke(cover);
+      setTimeout(() => spawnSmoke(cover), 150);
+    }
     setTimeout(() => { cover.classList.remove('shake'); }, 500);
 
     setTimeout(() => {
@@ -2078,7 +2302,7 @@
           card.classList.add('fly-in');
         });
       }
-    }, 2000);
+    }, 2200);
   }
 
   function spawnBlackoutSmoke(container){
@@ -2191,6 +2415,7 @@
   }
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script async="" src="https://www.tiktok.com/embed.js"></script>
 
 
